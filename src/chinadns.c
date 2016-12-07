@@ -806,6 +806,8 @@ static int should_filter_query(ns_msg msg, struct in_addr dns_addr) {
         if (dns_is_chn) {
           // filter DNS result from chn dns if result is outside chn
           return 1;
+        } else {//outside chn result from outside dns
+          return 0;
         }
       }
     } else if (type == ns_t_aaaa || type == ns_t_ptr) {
