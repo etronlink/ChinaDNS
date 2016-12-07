@@ -68,7 +68,7 @@ typedef struct {
 
 
 // avoid malloc and free
-#define BUF_SIZE 512
+#define BUF_SIZE 4096
 static char global_buf[BUF_SIZE];
 static char compression_buf[BUF_SIZE];
 static int verbose = 0;
@@ -117,7 +117,7 @@ static id_addr_t *queue_lookup(uint16_t id);
 static id_addr_t id_addr_queue[ID_ADDR_QUEUE_LEN];
 static int id_addr_queue_pos = 0;
 
-#define EMPTY_RESULT_DELAY 0.3f
+#define EMPTY_RESULT_DELAY 0.01f
 #define DELAY_QUEUE_LEN 128
 static delay_buf_t delay_queue[DELAY_QUEUE_LEN];
 static void schedule_delay(uint16_t query_id, const char *buf, size_t buflen,
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
     FD_SET(remote_sock, &errorset);
     struct timeval timeout = {
       .tv_sec = 0,
-      .tv_usec = 50 * 1000,
+      .tv_usec = 5 * 1000,
     };
     if (-1 == select(max_fd, &readset, NULL, &errorset, &timeout)) {
       ERR("select");
@@ -798,6 +798,8 @@ static int should_filter_query(ns_msg msg, struct in_addr dns_addr) {
             // filter DNS result from foreign dns if result is inside chn
             return 1;
           }
+        } else {//result is chn from chn dns
+          return 0;
         }
       } else {
         // result is foreign
