@@ -110,6 +110,7 @@ static const char *hostname_from_question(ns_msg msg);
 static int should_filter_query(ns_msg msg, struct in_addr dns_addr);
 
 static void queue_add(id_addr_t id_addr);
+static void queue_del(uint16_t id);
 static id_addr_t *queue_lookup(uint16_t id);
 
 #define ID_ADDR_QUEUE_LEN 128
@@ -591,7 +592,7 @@ static void dns_handle_local() {
       gettimeofday(&tv, 0);
       int randombits = (tv.tv_sec << 8) ^ tv.tv_usec;
       new_id = randombits & 0xffff;
-    } while (queue_lookup(new_id));
+    } while (new_id == 0xffff || queue_lookup(new_id));
 
     uint16_t ns_new_id = htons(new_id);
     memcpy(global_buf, &ns_new_id, 2);
@@ -684,8 +685,11 @@ static void dns_handle_remote() {
         if (verbose)
           printf("pass\n");
         if (-1 == sendto(local_sock, global_buf, len, 0, id_addr->addr,
-                         id_addr->addrlen))
+                         id_addr->addrlen)) {
           ERR("sendto");
+        } else {
+          queue_del(query_id);
+        }
       } else if (r == -1) {
         schedule_delay(query_id, global_buf, len, id_addr->addr,
                        id_addr->addrlen);
@@ -720,6 +724,16 @@ static id_addr_t *queue_lookup(uint16_t id) {
       return id_addr_queue + i;
   }
   return NULL;
+}
+
+static void queue_del(uint16_t id) {
+  int i;
+  for (i = 0; i < ID_ADDR_QUEUE_LEN; i++) {
+    if (id_addr_queue[i].id == id) {
+      id_addr_queue[i].id = 0xffff; //mark responsed
+      return;
+    }
+  }
 }
 
 static char *hostname_buf = NULL;
