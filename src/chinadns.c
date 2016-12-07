@@ -671,7 +671,7 @@ static void dns_handle_remote() {
     query_id = ns_msg_id(msg);
     question_hostname = hostname_from_question(msg);
     if (question_hostname) {
-      LOG("response %s from %s:%d - ", question_hostname,
+      LOG("query_id %d's response %s from %s:%d - ", query_id, question_hostname,
           inet_ntoa(((struct sockaddr_in *)src_addr)->sin_addr),
           htons(((struct sockaddr_in *)src_addr)->sin_port));
     }
